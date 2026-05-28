@@ -1,12 +1,12 @@
 name: purple_logger
-description: Enterprise-grade structured logger for PurpleSoft Flutter plugins. Zero print() calls, hierarchical log levels, and production-ready defaults.
-version: 1.0.0
+description: Enterprise-grade structured logger for Dart and Flutter. Provider pipeline, Zone-based scopes, filter rules, OpenTelemetry bridge, and zero-alloc guards.
+version: 2.0.0
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=3.2.0 <4.0.0'
 
 dependencies:
-  logging: ^1.3.0
+  meta: ^1.15.0
 
 dev_dependencies:
   lints: ^6.0.0
