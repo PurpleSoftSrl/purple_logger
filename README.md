@@ -1,280 +1,235 @@
-# purple_logger
+# PurpleLogger
 
-Enterprise-grade structured logger for Dart and Flutter.
+[![Pub Version](https://img.shields.io/pub/v/purple_logger.svg)](https://pub.dev/packages/purple_logger)
+[![License](https://img.shields.io/badge/license-AGPL%203.0-blue.svg)](LICENSE)
+[![Dart](https://img.shields.io/badge/dart-%3E%3D3.2.0-blue.svg)](https://dart.dev)
+[![Flutter](https://img.shields.io/badge/flutter-%3E%3D3.16.0-blue.svg)](https://flutter.dev)
 
-Named after Argus Panoptes — the all-seeing guardian of Greek mythology.
-Every event, every error, every trace — nothing escapes PurpleLogger.
+Enterprise-grade structured logger for Dart and Flutter — provider pipeline, zone-based scopes, file rotation, OpenTelemetry integration, and zero-allocation guards.
 
 ## Features
 
-- **Provider pipeline** — Multiple sinks (Console, Debug, Memory, Null, Custom) running simultaneously
-- **Structured properties** — Key-value pairs kept separate from messages
-- **Zone-based scopes** — Async-safe contextual properties that propagate through the entire call chain
-- **Filter rules** — Global + per-category + per-provider level control
-- **Zero-alloc guards** — `isEnabled()` exits before any object allocation
-- **Formatters** — Simple (human-readable) and JSON out of the box
-- **MemoryLogStore** — In-memory store with rich query methods for testing
-- **Tag-based logging** — Lightweight secondary classification
-- **Exception helper** — Auto-derived `errorType`/`errorMessage` properties
-- **HTTP interceptor** — Framework-agnostic request/response/error logging
-- **OpenTelemetry bridge** — Via the `purple_logger_otel` companion package
-- **No dependencies** — Pure Dart; works on all platforms (CLI, Flutter, server, web)
+### Core
+- **Provider pipeline** — multiple sinks (Console, Debug, File, Memory, OTel) running simultaneously
+- **7 severity levels** — trace, debug, info, warning, error, fatal + none
+- **Structured properties** — key-value pairs kept separate from messages, never concatenated
+- **Zone-based scopes** — async-safe contextual properties that propagate through the entire call chain
+- **Zero-alloc guards** — `isEnabled()` check before any object allocation
+- **Logger caching** — instances cached by category name
 
-## Quick start
+### Providers (Sinks)
+| Provider | Output | Use Case |
+|----------|--------|----------|
+| `ConsoleLoggerProvider` | stdout with ANSI colors | Development, debugging |
+| `DebugLoggerProvider` | `dart:developer.log()` | Flutter DevTools, web-safe |
+| `FileLoggerProvider` | File with rotation | Production servers, audit logs |
+| `MemoryLoggerProvider` | In-memory store | Testing, CI pipelines |
+| `NullLoggerProvider` | Discard | Optional dependencies |
+| `OtelLoggerProvider` | OpenTelemetry (via companion) | Observability backends |
 
-### One-liner
+### Enterprise
+- **File rotation** — size-based rolling with configurable max files + optional gzip
+- **Async buffered writes** — configurable flush interval for file output
+- **Property enrichers** — auto-inject hostname, pid, appName, appVersion, environment
+- **Environment variable config** — `PLOG_LEVEL`, `PLOG_FORMAT`, `PLOG_OUTPUT`, `PLOG_FILE_PATH`
+- **Runtime reconfiguration** — `setMinimumLevel()`, `addFilterRule()`, `removeFilterRule()` without restart
+- **Filter rules** — global + per-category-prefix + per-provider-type level control
+- **OpenTelemetry bridge** — structured logs become OTel LogRecords with trace correlation
+
+### Formatters
+| Formatter | Output | Use Case |
+|-----------|--------|----------|
+| `SimpleFormatter` | `[INFO] Category >> Message {props}` | Human-readable, development |
+| `JsonFormatter` | `{"timestamp":"...","level":"info","category":"...","message":"..."}` | Log aggregation, ELK, Loki |
+
+### Extensions & Integrations
+- **Tag-based logging** — `logger.infoTagged('auth', 'User logged in')`
+- **Exception helper** — `logger.logException(e, st)` — auto `errorType`/`errorMessage` properties
+- **HTTP interceptor** — framework-agnostic request/response/error logging
+- **Timing** — `logger.beginTimed('operation')` → `logger.endTimed()` → duration in properties
+
+### Testing Support
+- **`MemoryLogStore`** — rich query API: `eventsAtOrAbove()`, `eventsForCategory()`, `eventsForTag()`, `exportAsJson()`
+- **`TimestampProvider.fake()`** — deterministic timestamps for snapshot testing
+- **Bounded capacity** — configurable FIFO eviction to prevent OOM in long-running tests
+
+## Quick Start
 
 ```dart
 import 'package:purple_logger/purple_logger.dart';
 
 void main() {
+  // One-liner
   final log = PurpleLogger.quick();
   log.info('Application started');
-  log.warning('Config file not found');
-  log.error('Unexpected failure', error: exception, stackTrace: st);
-  PurpleLogger.disposeQuickFactory();
-}
-```
 
-### Full setup
-
-```dart
-import 'package:purple_logger/purple_logger.dart';
-
-void main() {
+  // Full setup
   final factory = LoggingBuilder()
     .addConsole()
+    .addFile('/var/log/app.log')
     .setMinimumLevel(PurpleLogLevel.info)
+    .addFilterRule(FilterRule(
+      categoryPrefix: 'network',
+      minimumLevel: PurpleLogLevel.error,
+    ))
+    .enrichWith({'environment': 'production', 'appVersion': '2.1.0'})
     .build();
 
-  final logger = factory.createLogger('MyApp');
-  logger.info('Application started');
-  logger.info('User logged in', properties: {'userId': 42, 'role': 'admin'});
-  logger.warning('Disk space low', properties: {'freeGb': 1.2});
-  logger.error('Unexpected failure', error: exception, stackTrace: st);
+  final logger = factory.createLogger('OrderService');
+  logger.info('Order placed', properties: {'orderId': 1042, 'total': 99.99});
+  logger.error('Payment failed', properties: {'orderId': 1042}, error: PaymentException());
 
   factory.dispose();
 }
 ```
 
-## Architecture
+## Environment Variable Config
 
+```bash
+export PLOG_LEVEL=info
+export PLOG_FORMAT=json
+export PLOG_OUTPUT=both
+export PLOG_FILE_PATH=/var/log/app.log
 ```
-LoggingBuilder → LoggerFactory → Logger
-                                     │
-                   ┌─────────────────┼──────────────────┐
-                   │                  │                  │
-             ConsoleProvider    DebugProvider     MemoryProvider
-                   │                  │                  │
-             SimpleFormatter    dart:developer     MemoryLogStore
-             (or JsonFormatter)  log()             (query/export)
-```
-
-## Log levels
-
-| Level | Label | OTel SeverityNumber | Use case |
-|-------|-------|--------------------:|----------|
-| trace | TRCE | 1 | Method entry/exit, internal state |
-| debug | DBUG | 5 | Developer diagnostics |
-| info | INFO | 9 | Normal operational milestones |
-| warning | WARN | 13 | Recoverable, unexpected situations |
-| error | EROR | 17 | Failures requiring attention |
-| fatal | CRIT | 21 | Unrecoverable failures |
-| none | NONE | 0 | Sentinel — suppresses all output |
-
-## Structured properties
-
-Properties are kept separate from the message so every provider can decide
-whether to render them inline (text) or persist them as structured fields (JSON):
 
 ```dart
-logger.info('Order placed', properties: {'orderId': 1042, 'amount': 299.99});
+final factory = LoggingBuilder.fromEnvironment().build();
 ```
 
-## Scoped logging
-
-Scopes carry contextual properties through an entire async call chain via
-Dart's `Zone` mechanism — no manual threading required:
-
-```dart
-final scope = logger.beginScope({'requestId': request.id, 'userId': request.userId});
-await scope.runAsync(() async {
-  logger.info('Processing');   // includes requestId + userId
-  await callDownstream();
-  logger.info('Done');         // still includes requestId + userId
-});
-```
-
-## Filter rules
+## Enriched Logging
 
 ```dart
 final factory = LoggingBuilder()
   .addConsole()
-  .setMinimumLevel(PurpleLogLevel.debug)                // global floor
-  .addFilterRule(FilterRule(
-    categoryPrefix: 'network',
-    minimumLevel: PurpleLogLevel.error,                  // noisy subsystem override
+  .enrichWithEnricher(LoggerEnricher.fromEnvironment(
+    appName: 'my-api',
+    appVersion: '2.1.0',
+    environment: 'production',
   ))
-  .addFilterRule(FilterRule(
-    providerType: ConsoleLoggerProvider,
-    categoryPrefix: 'metrics',
-    minimumLevel: PurpleLogLevel.none,                  // silence metrics on console
+  .build();
+
+// Every log event automatically includes:
+//   hostname, pid, appName, appVersion, environment
+```
+
+## Filtering
+
+```dart
+final factory = LoggingBuilder()
+  .addConsole()
+  .addFile('/var/log/app.log')
+  .setMinimumLevel(PurpleLogLevel.warning)           // global minimum
+  .addFilterRule(FilterRule(                         // per-category
+    categoryPrefix: 'network',
+    minimumLevel: PurpleLogLevel.error,
+  ))
+  .addFilterRule(FilterRule(                         // per-provider
+    providerType: FileLoggerProvider,
+    minimumLevel: PurpleLogLevel.trace,
+  ))
+  .build();
+
+// Runtime reconfiguration
+factory.setMinimumLevel(PurpleLogLevel.debug);
+factory.addFilterRule(FilterRule(
+  categoryPrefix: 'auth',
+  minimumLevel: PurpleLogLevel.trace,
+));
+```
+
+## Zone-based Scopes
+
+```dart
+final logger = factory.createLogger('handler');
+logger.info('Request started');
+
+LoggingScope.run({'requestId': 'abc-123'}, () {
+  logger.info('Processing'); // automatically includes requestId
+
+  LoggingScope.run({'userId': '42'}, () {
+    // Child scope merges: {requestId: abc-123, userId: 42}
+    logger.info('User found');
+  });
+});
+```
+
+## File Logger with Rotation
+
+```dart
+final factory = LoggingBuilder()
+  .addProvider(FileLoggerProvider(
+    filePath: '/var/log/app.log',
+    formatter: const JsonFormatter(),
+    rotation: const RotatingFileConfig(
+      maxFileSizeBytes: 50 * 1024 * 1024,  // 50 MB
+      maxFiles: 10,
+      compressRotated: true,
+    ),
+    flushIntervalMs: 500,
   ))
   .build();
 ```
 
-Rule specificity (highest wins):
-1. Provider type and category prefix
-2. Category prefix only
-3. Provider type only
-4. Global minimum (catch-all)
-
-## Providers
-
-### Console (`ConsoleLoggerProvider`)
-
-Writes ANSI-colored output to `stdout`. Available on all platforms except web.
+## OpenTelemetry Integration
 
 ```dart
-LoggingBuilder().addConsole()
-LoggingBuilder().addConsole(formatter: const JsonFormatter())
+// purple_logger → PurpleOTel SDK → OTLP Collector
+final factory = LoggingBuilder()
+  .addConsole()
+  .addProvider(PurpleOtelLoggerProvider(otelProvider: sdkLoggerProvider))
+  .build();
 ```
 
-### Debug (`DebugLoggerProvider`)
-
-Writes to `dart:developer`'s `log()`, visible in Flutter/Dart DevTools. Works on all platforms including web.
+## Testing
 
 ```dart
-LoggingBuilder().addDebug()
-```
-
-### Memory (`MemoryLoggerProvider` + `MemoryLogStore`)
-
-Stores events in memory; primarily intended for unit and integration tests.
-
-```dart
-final store = MemoryLogStore();
+final store = MemoryLogStore(maxCapacity: 100);
 final factory = LoggingBuilder()
   .addMemory(store: store)
   .setMinimumLevel(PurpleLogLevel.trace)
   .build();
 
-// Query methods
-store.events;
-store.eventsAtOrAbove(PurpleLogLevel.warning);
-store.eventsForCategory('OrderService');
-store.eventsForTag('auth');
-store.exportAsJson();
+final logger = factory.createLogger('test');
+logger.info('test message', properties: {'key': 'value'});
+logger.warning('warning');
+logger.error('error');
+
+// Query
+final errors = store.eventsAtOrAbove(PurpleLogLevel.error);
+final forCategory = store.eventsForCategory('test');
+final json = store.exportAsJson();
+
 store.clear();
 ```
 
-### Null (`NullLoggerProvider` / `NullLogger`)
+## Architecture
 
-Discards every entry. Useful as a no-op default for optional logger dependencies.
-
-```dart
-class MyService {
-  MyService({Logger? logger}) : _logger = logger ?? NullLogger();
-  final Logger _logger;
-}
+```
+User Code
+    │
+    ├─ logger.info("msg", {props})
+    ▼
+LoggerImpl.log()
+    │ 1. isEnabled() zero-alloc guard
+    │ 2. Single LogEvent allocation, shared across all providers
+    │ 3. Merge scopeProperties + enricher properties
+    │ 4. Dispatch to each ProviderLogger
+    ▼
+┌──────────────────┬─────────────────┬───────────────────┐
+│ ConsoleLogger    │ FileLogger       │ MemoryLogger       │
+│ (ANSI stdout)    │ (rotation)       │ (in-memory store)  │
+│ SimpleFormatter  │ JsonFormatter    │ query API          │
+└──────────────────┴─────────────────┴───────────────────┘
 ```
 
-### Custom providers
+## Companion Packages
 
-```dart
-final class SyslogProvider extends LoggerProvider {
-  @override
-  Logger createLogger(String category) => SyslogLogger(category: category);
-
-  @override
-  void dispose() { /* close socket */ }
-}
-```
-
-## Tag-based logging
-
-```dart
-logger.infoTagged('auth', 'User signed in', properties: {'userId': 42});
-logger.errorTagged('payment', 'Charge failed', error: ex, stackTrace: st);
-```
-
-## Exception helper
-
-```dart
-try {
-  await fetchOrder(id);
-} catch (e, st) {
-  logger.logException(e, st, message: 'Failed to fetch order', properties: {'orderId': id});
-  // Automatically adds: errorType, errorMessage to properties
-}
-```
-
-## HTTP interceptor
-
-Framework-agnostic — works with `dio`, `http`, or any HTTP client:
-
-```dart
-final interceptor = HttpLogInterceptor(logger, logHeaders: true);
-interceptor.onRequest('GET', 'https://api.example.com/orders/1');
-interceptor.onResponse(200, 'https://api.example.com/orders/1', durationMs: 42);
-interceptor.onError('GET', 'https://api.example.com/orders/1', error, st);
-```
-
-## OpenTelemetry bridge
-
-Use the `purple_logger_otel` companion package to bridge PurpleLogger events
-to OpenTelemetry via OTLP (gRPC/HTTP):
-
-```dart
-import 'package:purple_logger_otel/purple_logger_otel.dart';
-
-final factory = LoggingBuilder()
-  .addProvider(OtelLoggerProvider(endpoint: 'http://otel-collector:4318'))
-  .addConsole()
-  .build();
-```
-
-## Performance
-
-- **Zero allocations** when a log level is disabled — `isEnabled` exits before any object is created.
-- **Single `LogEvent` allocation** per `log()` call, shared across all providers.
-- **Zone-local scope lookup** — O(1) read, no contention.
-- **No reflection** — category names are plain strings; no `dart:mirrors`.
-- **Efficient ring buffer** in `MemoryLogStore` — O(1) eviction via `ListQueue`.
-
-```dart
-if (logger.isEnabled(PurpleLogLevel.debug)) {
-  logger.debug('Snapshot: ${expensiveDump()}');
-}
-```
+| Package | Description |
+|---------|-------------|
+| [purple_logger_otel](https://pub.dev/packages/purple_logger_otel) | OTel bridge abstractions |
+| [purple_logger_otel_sdk](https://pub.dev/packages/purple_logger_otel_sdk) | PurpleOTel SDK bridge (our implementation) |
+| [purple_otel_sdk](https://pub.dev/packages/purple_otel_sdk) | Full OpenTelemetry SDK |
 
 ## License
 
-Apache-2.0
-- **Error + StackTrace support** — full context on failures
-- **Lightweight** — depends only on `package:logging`
-
-## Usage
-
-```dart
-import 'package:purple_logger/purple_logger.dart';
-
-final _log = PurpleLogger('PurpleTTS');
-
-_log.info('Engine initialized');
-_log.warning('Voice not found, falling back');
-_log.error('Synthesis failed', error: e, stackTrace: st);
-```
-
-## Log Levels
-
-| Level     | Use Case                          |
-|-----------|-----------------------------------|
-| `finest`  | Verbose internal tracing          |
-| `finer`   | Detailed tracing (event dispatch) |
-| `fine`    | General tracing (state changes)   |
-| `config`  | Configuration changes             |
-| `info`    | Important operational events       |
-| `warning` | Recoverable issues                 |
-| `error`   | Failures requiring attention       |
-| `critical`| Critical failures                  |
+AGPL-3.0 — see [LICENSE](LICENSE).
