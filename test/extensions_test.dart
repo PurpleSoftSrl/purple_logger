@@ -56,12 +56,14 @@ void main() {
       logger.logException(err, StackTrace.current);
       final event = store.events.first;
       expect(event.properties['errorType'], equals('FormatException'));
-      expect(event.properties['errorMessage'], equals('FormatException: bad input'));
+      expect(event.properties['errorMessage'],
+          equals('FormatException: bad input'));
     });
 
     test('logException with custom message', () {
       final err = FormatException('bad');
-      logger.logException(err, StackTrace.current, message: 'Validation failed');
+      logger.logException(err, StackTrace.current,
+          message: 'Validation failed');
       final event = store.events.first;
       expect(event.message, equals('Validation failed'));
     });

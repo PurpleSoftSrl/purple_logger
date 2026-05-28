@@ -63,7 +63,8 @@ final class LoggerImpl with LoggerConvenience implements Logger {
     if (!anyEnabled) return;
 
     // Single LogEvent allocation, shared across all providers.
-    final scopeProps = Map<String, Object?>.from(LoggingScope.currentProperties);
+    final scopeProps =
+        Map<String, Object?>.from(LoggingScope.currentProperties);
     if (_enricher != null) {
       scopeProps.addAll(_enricher.properties);
     }

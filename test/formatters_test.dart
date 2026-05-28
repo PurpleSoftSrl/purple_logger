@@ -10,7 +10,8 @@ void main() {
         message: 'Hello',
         timestamp: DateTime(2026, 5, 28, 14, 23, 1),
       );
-      final output = const SimpleFormatter(includeTimestamp: false).format(event);
+      final output =
+          const SimpleFormatter(includeTimestamp: false).format(event);
       expect(output, contains('[INFO]'));
       expect(output, contains('Svc »'));
       expect(output, contains('Hello'));
@@ -24,7 +25,8 @@ void main() {
         timestamp: DateTime.now(),
         properties: {'orderId': 42},
       );
-      final output = const SimpleFormatter(includeTimestamp: false).format(event);
+      final output =
+          const SimpleFormatter(includeTimestamp: false).format(event);
       expect(output, contains('orderId: 42'));
     });
 
@@ -36,7 +38,8 @@ void main() {
         timestamp: DateTime.now(),
         error: Exception('boom'),
       );
-      final output = const SimpleFormatter(includeTimestamp: false).format(event);
+      final output =
+          const SimpleFormatter(includeTimestamp: false).format(event);
       expect(output, contains('Error:'));
       expect(output, contains('Exception: boom'));
     });

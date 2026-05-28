@@ -24,11 +24,13 @@ void main() {
       interceptor.onRequest('GET', 'https://api.example.com/orders');
       final event = store.events.first;
       expect(event.properties['http.method'], equals('GET'));
-      expect(event.properties['http.url'], equals('https://api.example.com/orders'));
+      expect(event.properties['http.url'],
+          equals('https://api.example.com/orders'));
     });
 
     test('onResponse logs status and url', () {
-      interceptor.onResponse(200, 'https://api.example.com/orders', durationMs: 42);
+      interceptor.onResponse(200, 'https://api.example.com/orders',
+          durationMs: 42);
       final event = store.events.first;
       expect(event.properties['http.status'], equals(200));
       expect(event.properties['http.durationMs'], equals(42));
@@ -36,7 +38,8 @@ void main() {
 
     test('onError logs error with stackTrace', () {
       final err = Exception('timeout');
-      interceptor.onError('GET', 'https://api.example.com', err, StackTrace.current);
+      interceptor.onError(
+          'GET', 'https://api.example.com', err, StackTrace.current);
       final event = store.events.first;
       expect(event.level, equals(PurpleLogLevel.error));
       expect(event.error, equals(err));

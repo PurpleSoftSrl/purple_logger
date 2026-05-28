@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import '../abstractions/event_logger.dart';
@@ -27,7 +26,6 @@ final class FileLoggerProvider extends LoggerProvider {
   final String _filePath;
   final LogFormatter _formatter;
   final RotatingFileConfig _rotation;
-  final int _flushIntervalMs;
   final List<LogEvent> _buffer = [];
   final List<FileLogger> _loggers = [];
   RandomAccessFile? _file;
@@ -42,8 +40,7 @@ final class FileLoggerProvider extends LoggerProvider {
     int flushIntervalMs = 500,
   })  : _filePath = filePath,
         _formatter = formatter ?? const SimpleFormatter(includeTimestamp: true),
-        _rotation = rotation ?? const RotatingFileConfig(),
-        _flushIntervalMs = flushIntervalMs {
+        _rotation = rotation ?? const RotatingFileConfig() {
     _ensureDirectoryExists();
     _openFile();
     if (flushIntervalMs > 0) {

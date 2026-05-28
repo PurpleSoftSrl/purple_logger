@@ -29,7 +29,8 @@ void main() {
       final before = DateTime.now();
       final result = TimestampProvider.utc.now();
       final after = DateTime.now();
-      expect(result.isAfter(before.subtract(Duration(milliseconds: 1))), isTrue);
+      expect(
+          result.isAfter(before.subtract(Duration(milliseconds: 1))), isTrue);
       expect(result.isBefore(after.add(Duration(milliseconds: 1))), isTrue);
     });
 

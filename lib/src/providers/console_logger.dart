@@ -69,13 +69,13 @@ final class ConsoleLogger with LoggerConvenience implements EventLogger {
   static String _colorize(PurpleLogLevel level, String text) {
     // Only colorize if stdout supports ANSI (most terminals do).
     final code = switch (level) {
-      PurpleLogLevel.trace   => '\x1B[37m',   // white
-      PurpleLogLevel.debug   => '\x1B[36m',   // cyan
-      PurpleLogLevel.info    => '\x1B[32m',   // green
-      PurpleLogLevel.warning => '\x1B[33m',   // yellow
-      PurpleLogLevel.error   => '\x1B[31m',   // red
-      PurpleLogLevel.fatal   => '\x1B[35m',   // magenta
-      PurpleLogLevel.none    => '',
+      PurpleLogLevel.trace => '\x1B[37m', // white
+      PurpleLogLevel.debug => '\x1B[36m', // cyan
+      PurpleLogLevel.info => '\x1B[32m', // green
+      PurpleLogLevel.warning => '\x1B[33m', // yellow
+      PurpleLogLevel.error => '\x1B[31m', // red
+      PurpleLogLevel.fatal => '\x1B[35m', // magenta
+      PurpleLogLevel.none => '',
     };
     if (code.isEmpty) return text;
     return '$code$text\x1B[0m';

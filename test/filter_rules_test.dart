@@ -5,15 +5,23 @@ void main() {
   group('FilterRule', () {
     test('specificity: provider+prefix > prefix only > provider only', () {
       expect(
-        FilterRule(minimumLevel: PurpleLogLevel.error, providerType: ConsoleLoggerProvider, categoryPrefix: 'net').specificity,
+        FilterRule(
+                minimumLevel: PurpleLogLevel.error,
+                providerType: ConsoleLoggerProvider,
+                categoryPrefix: 'net')
+            .specificity,
         equals(3),
       );
       expect(
-        FilterRule(minimumLevel: PurpleLogLevel.error, categoryPrefix: 'net').specificity,
+        FilterRule(minimumLevel: PurpleLogLevel.error, categoryPrefix: 'net')
+            .specificity,
         equals(1),
       );
       expect(
-        FilterRule(minimumLevel: PurpleLogLevel.error, providerType: ConsoleLoggerProvider).specificity,
+        FilterRule(
+                minimumLevel: PurpleLogLevel.error,
+                providerType: ConsoleLoggerProvider)
+            .specificity,
         equals(2),
       );
     });
@@ -41,7 +49,10 @@ void main() {
 
     test('category prefix rule overrides global', () {
       final rules = FilterRuleSet(
-        rules: [FilterRule(minimumLevel: PurpleLogLevel.error, categoryPrefix: 'network')],
+        rules: [
+          FilterRule(
+              minimumLevel: PurpleLogLevel.error, categoryPrefix: 'network')
+        ],
         globalMinimum: PurpleLogLevel.trace,
       );
       expect(
@@ -57,8 +68,12 @@ void main() {
     test('most specific rule wins', () {
       final rules = FilterRuleSet(
         rules: [
-          FilterRule(minimumLevel: PurpleLogLevel.trace, categoryPrefix: 'network'),
-          FilterRule(minimumLevel: PurpleLogLevel.fatal, providerType: ConsoleLoggerProvider, categoryPrefix: 'network'),
+          FilterRule(
+              minimumLevel: PurpleLogLevel.trace, categoryPrefix: 'network'),
+          FilterRule(
+              minimumLevel: PurpleLogLevel.fatal,
+              providerType: ConsoleLoggerProvider,
+              categoryPrefix: 'network'),
         ],
         globalMinimum: PurpleLogLevel.info,
       );
@@ -71,9 +86,13 @@ void main() {
 
     test('isEnabled respects filter', () {
       final rules = FilterRuleSet(globalMinimum: PurpleLogLevel.warning);
-      expect(rules.isEnabled(ConsoleLoggerProvider, 'X', PurpleLogLevel.info), isFalse);
-      expect(rules.isEnabled(ConsoleLoggerProvider, 'X', PurpleLogLevel.warning), isTrue);
-      expect(rules.isEnabled(ConsoleLoggerProvider, 'X', PurpleLogLevel.none), isFalse);
+      expect(rules.isEnabled(ConsoleLoggerProvider, 'X', PurpleLogLevel.info),
+          isFalse);
+      expect(
+          rules.isEnabled(ConsoleLoggerProvider, 'X', PurpleLogLevel.warning),
+          isTrue);
+      expect(rules.isEnabled(ConsoleLoggerProvider, 'X', PurpleLogLevel.none),
+          isFalse);
     });
   });
 }

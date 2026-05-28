@@ -71,21 +71,25 @@ final class LoggingBuilder {
 
   factory LoggingBuilder.fromEnvironment({Map<String, String>? overrides}) {
     final config = EnvLoggingConfig.fromEnvironment(overrides: overrides);
-    final builder = LoggingBuilder()
-      ..setMinimumLevel(config.minimumLevel);
+    final builder = LoggingBuilder()..setMinimumLevel(config.minimumLevel);
 
     final format = config.logFormat;
     final output = config.logOutput;
 
     if (output == 'file' || output == 'both') {
       final filePath = config.filePath ?? 'app.log';
-      builder.addProvider(FileLoggerProvider(filePath: filePath,
-        formatter: format == 'json' ? const JsonFormatter() : const SimpleFormatter(includeTimestamp: true)));
+      builder.addProvider(FileLoggerProvider(
+          filePath: filePath,
+          formatter: format == 'json'
+              ? const JsonFormatter()
+              : const SimpleFormatter(includeTimestamp: true)));
     }
 
     if (output == null || output == 'console' || output == 'both') {
       builder.addProvider(ConsoleLoggerProvider(
-        formatter: format == 'json' ? const JsonFormatter() : const SimpleFormatter(includeTimestamp: true)));
+          formatter: format == 'json'
+              ? const JsonFormatter()
+              : const SimpleFormatter(includeTimestamp: true)));
     }
 
     builder.enrichWithEnricher(LoggerEnricher.fromEnvironment());

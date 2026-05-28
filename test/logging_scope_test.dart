@@ -20,7 +20,8 @@ void main() {
       final scope = LoggingScope({'requestId': 'abc-123'});
       scope.run(() {
         expect(LoggingScope.current, same(scope));
-        expect(LoggingScope.currentProperties, containsPair('requestId', 'abc-123'));
+        expect(LoggingScope.currentProperties,
+            containsPair('requestId', 'abc-123'));
       });
     });
 
@@ -28,7 +29,8 @@ void main() {
       final scope = LoggingScope({'requestId': 'abc-123'});
       await scope.runAsync(() async {
         expect(LoggingScope.current, same(scope));
-        expect(LoggingScope.currentProperties, containsPair('requestId', 'abc-123'));
+        expect(LoggingScope.currentProperties,
+            containsPair('requestId', 'abc-123'));
       });
     });
 

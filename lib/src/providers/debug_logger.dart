@@ -60,12 +60,12 @@ final class DebugLogger with LoggerConvenience implements EventLogger {
 
   /// Maps [PurpleLogLevel] to `dart:developer` log levels.
   static int _mapLevel(PurpleLogLevel level) => switch (level) {
-        PurpleLogLevel.trace   => 500,
-        PurpleLogLevel.debug   => 800,
-        PurpleLogLevel.info    => 900,
+        PurpleLogLevel.trace => 500,
+        PurpleLogLevel.debug => 800,
+        PurpleLogLevel.info => 900,
         PurpleLogLevel.warning => 1000,
-        PurpleLogLevel.error   => 1200,
-        PurpleLogLevel.fatal   => 1500,
-        PurpleLogLevel.none    => 0,
+        PurpleLogLevel.error => 1200,
+        PurpleLogLevel.fatal => 1500,
+        PurpleLogLevel.none => 0,
       };
 }

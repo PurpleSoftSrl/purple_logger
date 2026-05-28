@@ -36,14 +36,22 @@ final class EnvLoggingConfig {
   static PurpleLogLevel _parseLevel(String? value) {
     if (value == null) return PurpleLogLevel.info;
     switch (value.toLowerCase()) {
-      case 'trace': return PurpleLogLevel.trace;
-      case 'debug': return PurpleLogLevel.debug;
-      case 'info': return PurpleLogLevel.info;
-      case 'warning': return PurpleLogLevel.warning;
-      case 'error': return PurpleLogLevel.error;
-      case 'fatal': return PurpleLogLevel.fatal;
-      case 'none': return PurpleLogLevel.none;
-      default: return PurpleLogLevel.info;
+      case 'trace':
+        return PurpleLogLevel.trace;
+      case 'debug':
+        return PurpleLogLevel.debug;
+      case 'info':
+        return PurpleLogLevel.info;
+      case 'warning':
+        return PurpleLogLevel.warning;
+      case 'error':
+        return PurpleLogLevel.error;
+      case 'fatal':
+        return PurpleLogLevel.fatal;
+      case 'none':
+        return PurpleLogLevel.none;
+      default:
+        return PurpleLogLevel.info;
     }
   }
 }

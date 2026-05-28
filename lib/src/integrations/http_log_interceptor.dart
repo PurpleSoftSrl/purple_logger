@@ -85,7 +85,12 @@ final class HttpLogInterceptor {
     if (statusCode != null) props['http.status'] = statusCode;
     if (logHeaders && headers != null) props['http.request.headers'] = headers;
     if (logBody && body != null) props['http.request.body'] = body;
-    _logger.log(errorLevel, '$method $url failed',
-        properties: props, error: error, stackTrace: stackTrace,);
+    _logger.log(
+      errorLevel,
+      '$method $url failed',
+      properties: props,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 }

@@ -32,8 +32,13 @@ extension LoggerExceptionExtension on Logger {
       'errorMessage': error.toString(),
     };
     if (properties != null) merged.addAll(properties);
-    log(level, autoMessage,
-        properties: merged, error: error, stackTrace: stackTrace,);
+    log(
+      level,
+      autoMessage,
+      properties: merged,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
   String _deriveMessage(Object error) {

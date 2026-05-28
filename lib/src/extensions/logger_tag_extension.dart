@@ -27,19 +27,23 @@ extension LoggerTagExtension on Logger {
   }
 
   /// Tagged [PurpleLogLevel.trace].
-  void traceTagged(String tag, Object? message, {Map<String, Object?>? properties}) =>
+  void traceTagged(String tag, Object? message,
+          {Map<String, Object?>? properties}) =>
       logTagged(PurpleLogLevel.trace, tag, message, properties: properties);
 
   /// Tagged [PurpleLogLevel.debug].
-  void debugTagged(String tag, Object? message, {Map<String, Object?>? properties}) =>
+  void debugTagged(String tag, Object? message,
+          {Map<String, Object?>? properties}) =>
       logTagged(PurpleLogLevel.debug, tag, message, properties: properties);
 
   /// Tagged [PurpleLogLevel.info].
-  void infoTagged(String tag, Object? message, {Map<String, Object?>? properties}) =>
+  void infoTagged(String tag, Object? message,
+          {Map<String, Object?>? properties}) =>
       logTagged(PurpleLogLevel.info, tag, message, properties: properties);
 
   /// Tagged [PurpleLogLevel.warning].
-  void warningTagged(String tag, Object? message, {Map<String, Object?>? properties}) =>
+  void warningTagged(String tag, Object? message,
+          {Map<String, Object?>? properties}) =>
       logTagged(PurpleLogLevel.warning, tag, message, properties: properties);
 
   /// Tagged [PurpleLogLevel.error].
@@ -50,8 +54,13 @@ extension LoggerTagExtension on Logger {
     StackTrace? stackTrace,
     Map<String, Object?>? properties,
   }) =>
-      log(PurpleLogLevel.error, message,
-          properties: _withTag(tag, properties), error: error, stackTrace: stackTrace,);
+      log(
+        PurpleLogLevel.error,
+        message,
+        properties: _withTag(tag, properties),
+        error: error,
+        stackTrace: stackTrace,
+      );
 
   /// Tagged [PurpleLogLevel.fatal].
   void fatalTagged(
@@ -61,8 +70,13 @@ extension LoggerTagExtension on Logger {
     StackTrace? stackTrace,
     Map<String, Object?>? properties,
   }) =>
-      log(PurpleLogLevel.fatal, message,
-          properties: _withTag(tag, properties), error: error, stackTrace: stackTrace,);
+      log(
+        PurpleLogLevel.fatal,
+        message,
+        properties: _withTag(tag, properties),
+        error: error,
+        stackTrace: stackTrace,
+      );
 
   Map<String, Object?> _withTag(String tag, Map<String, Object?>? props) {
     final merged = <String, Object?>{LoggerTagExtension.tagKey: tag};

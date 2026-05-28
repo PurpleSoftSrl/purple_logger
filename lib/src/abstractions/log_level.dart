@@ -30,37 +30,37 @@ enum PurpleLogLevel {
 
   /// Short label used by formatters (4 chars, uppercase).
   String get label => switch (this) {
-        trace   => 'TRCE',
-        debug   => 'DBUG',
-        info    => 'INFO',
+        trace => 'TRCE',
+        debug => 'DBUG',
+        info => 'INFO',
         warning => 'WARN',
-        error   => 'EROR',
-        fatal   => 'CRIT',
-        none    => 'NONE',
+        error => 'EROR',
+        fatal => 'CRIT',
+        none => 'NONE',
       };
 
   /// OpenTelemetry SeverityNumber per the OTel Logs data model.
   ///
   /// See: https://opentelemetry.io/docs/specs/otel/logs/data-model/#field-severitynumber
   int get severityNumber => switch (this) {
-        trace   => 1,  // TRACE
-        debug   => 5,  // DEBUG
-        info    => 9,  // INFO
+        trace => 1, // TRACE
+        debug => 5, // DEBUG
+        info => 9, // INFO
         warning => 13, // WARN
-        error   => 17, // ERROR
-        fatal   => 21, // FATAL
-        none    => 0,  // unset
+        error => 17, // ERROR
+        fatal => 21, // FATAL
+        none => 0, // unset
       };
 
   /// OpenTelemetry severity text per the OTel spec.
   String get severityText => switch (this) {
-        trace   => 'TRACE',
-        debug   => 'DEBUG',
-        info    => 'INFO',
+        trace => 'TRACE',
+        debug => 'DEBUG',
+        info => 'INFO',
         warning => 'WARN',
-        error   => 'ERROR',
-        fatal   => 'FATAL',
-        none    => '',
+        error => 'ERROR',
+        fatal => 'FATAL',
+        none => '',
       };
 
   /// Returns `true` if this level is at least as severe as [minimum].

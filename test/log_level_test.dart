@@ -7,7 +7,8 @@ void main() {
       expect(PurpleLogLevel.trace.index, lessThan(PurpleLogLevel.debug.index));
       expect(PurpleLogLevel.debug.index, lessThan(PurpleLogLevel.info.index));
       expect(PurpleLogLevel.info.index, lessThan(PurpleLogLevel.warning.index));
-      expect(PurpleLogLevel.warning.index, lessThan(PurpleLogLevel.error.index));
+      expect(
+          PurpleLogLevel.warning.index, lessThan(PurpleLogLevel.error.index));
       expect(PurpleLogLevel.error.index, lessThan(PurpleLogLevel.fatal.index));
       expect(PurpleLogLevel.fatal.index, lessThan(PurpleLogLevel.none.index));
     });

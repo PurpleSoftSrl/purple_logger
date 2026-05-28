@@ -100,8 +100,13 @@ mixin LoggerConvenience implements Logger {
     StackTrace? stackTrace,
     Map<String, Object?>? properties,
   }) =>
-      log(PurpleLogLevel.error, message,
-          properties: properties, error: error, stackTrace: stackTrace,);
+      log(
+        PurpleLogLevel.error,
+        message,
+        properties: properties,
+        error: error,
+        stackTrace: stackTrace,
+      );
 
   @override
   void fatal(
@@ -110,6 +115,11 @@ mixin LoggerConvenience implements Logger {
     StackTrace? stackTrace,
     Map<String, Object?>? properties,
   }) =>
-      log(PurpleLogLevel.fatal, message,
-          properties: properties, error: error, stackTrace: stackTrace,);
+      log(
+        PurpleLogLevel.fatal,
+        message,
+        properties: properties,
+        error: error,
+        stackTrace: stackTrace,
+      );
 }
