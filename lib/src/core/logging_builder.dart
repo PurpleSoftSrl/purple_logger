@@ -1,53 +1,57 @@
 import '../abstractions/log_level.dart';
 import '../abstractions/logger_factory.dart';
 import '../abstractions/logger_provider.dart';
+import '../formatting/json_formatter.dart';
+import '../formatting/simple_formatter.dart';
+import '../providers/console_logger.dart';
+import '../providers/file_logger.dart';
 import '../utils/timestamp_provider.dart';
+import 'env_logging_config.dart';
 import 'filter_rules.dart';
+import 'logger_enricher.dart';
 import 'logger_factory_impl.dart';
 
-/// Fluent builder for constructing a [LoggerFactory].
-///
-/// ```dart
-/// final factory = LoggingBuilder()
-///   .addConsole()
-///   .setMinimumLevel(PurpleLogLevel.info)
-///   .addFilterRule(FilterRule(
-///     categoryPrefix: 'network',
-///     minimumLevel: PurpleLogLevel.error,
-///   ))
-///   .build();
-/// ```
 final class LoggingBuilder {
   final List<LoggerProvider> _providers = [];
   PurpleLogLevel _minimumLevel = PurpleLogLevel.trace;
   final List<FilterRule> _rules = [];
   TimestampProvider _clock = TimestampProvider.utc;
+  LoggerEnricher? _enricher;
 
-  /// Registers a [LoggerProvider].
+  LoggingBuilder();
+
   LoggingBuilder addProvider(LoggerProvider provider) {
     _providers.add(provider);
     return this;
   }
 
-  /// Sets the global minimum log level (catch-all).
   LoggingBuilder setMinimumLevel(PurpleLogLevel level) {
     _minimumLevel = level;
     return this;
   }
 
-  /// Adds a filter rule for fine-grained level control.
   LoggingBuilder addFilterRule(FilterRule rule) {
     _rules.add(rule);
     return this;
   }
 
-  /// Overrides the timestamp provider (useful for testing).
   LoggingBuilder useTimestampProvider(TimestampProvider provider) {
     _clock = provider;
     return this;
   }
 
-  /// Builds the [LoggerFactory] with the configured providers and filters.
+  LoggingBuilder enrichWith(Map<String, Object?> properties) {
+    _enricher = _enricher != null
+        ? _enricher!.merge(LoggerEnricher(properties))
+        : LoggerEnricher(properties);
+    return this;
+  }
+
+  LoggingBuilder enrichWithEnricher(LoggerEnricher enricher) {
+    _enricher = _enricher != null ? _enricher!.merge(enricher) : enricher;
+    return this;
+  }
+
   LoggerFactory build() {
     if (_providers.isEmpty) {
       throw StateError(
@@ -61,6 +65,31 @@ final class LoggingBuilder {
         globalMinimum: _minimumLevel,
       ),
       clock: _clock,
+      enricher: _enricher,
     );
+  }
+
+  factory LoggingBuilder.fromEnvironment({Map<String, String>? overrides}) {
+    final config = EnvLoggingConfig.fromEnvironment(overrides: overrides);
+    final builder = LoggingBuilder()
+      ..setMinimumLevel(config.minimumLevel);
+
+    final format = config.logFormat;
+    final output = config.logOutput;
+
+    if (output == 'file' || output == 'both') {
+      final filePath = config.filePath ?? 'app.log';
+      builder.addProvider(FileLoggerProvider(filePath: filePath,
+        formatter: format == 'json' ? const JsonFormatter() : const SimpleFormatter(includeTimestamp: true)));
+    }
+
+    if (output == null || output == 'console' || output == 'both') {
+      builder.addProvider(ConsoleLoggerProvider(
+        formatter: format == 'json' ? const JsonFormatter() : const SimpleFormatter(includeTimestamp: true)));
+    }
+
+    builder.enrichWithEnricher(LoggerEnricher.fromEnvironment());
+
+    return builder;
   }
 }

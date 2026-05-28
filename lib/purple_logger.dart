@@ -49,6 +49,8 @@ export 'src/abstractions/logging_scope.dart';
 // ── Core ────────────────────────────────────────────────────────────────────
 export 'src/core/filter_rules.dart';
 export 'src/core/logging_builder.dart';
+export 'src/core/logger_enricher.dart';
+export 'src/core/env_logging_config.dart';
 export 'src/core/logger_factory_impl.dart';
 export 'src/core/logger_impl.dart';
 export 'src/core/purple_logger_quick.dart';
@@ -56,6 +58,7 @@ export 'src/core/purple_logger_quick.dart';
 // ── Providers ────────────────────────────────────────────────────────────────
 export 'src/providers/console_logger.dart';
 export 'src/providers/debug_logger.dart';
+export 'src/providers/file_logger.dart';
 export 'src/providers/memory_logger.dart';
 export 'src/providers/null_logger.dart';
 

@@ -1,15 +1,17 @@
+import '../abstractions/log_level.dart';
 import '../abstractions/logger.dart';
 import '../abstractions/logger_factory.dart';
 import '../abstractions/logger_provider.dart';
 import '../utils/timestamp_provider.dart';
 import 'filter_rules.dart';
+import 'logger_enricher.dart';
 import 'logger_impl.dart';
 
-/// Concrete [LoggerFactory] that manages the provider pipeline.
 final class LoggerFactoryImpl implements LoggerFactory {
   final List<LoggerProvider> _providers;
-  final FilterRuleSet _filters;
+  FilterRuleSet _filters;
   final TimestampProvider _clock;
+  final LoggerEnricher? _enricher;
   final Map<String, Logger> _cache = {};
   bool _disposed = false;
 
@@ -17,9 +19,11 @@ final class LoggerFactoryImpl implements LoggerFactory {
     required List<LoggerProvider> providers,
     required FilterRuleSet filters,
     required TimestampProvider clock,
+    LoggerEnricher? enricher,
   })  : _providers = List.of(providers),
         _filters = filters,
-        _clock = clock;
+        _clock = clock,
+        _enricher = enricher;
 
   @override
   Logger createLogger(String category) {
@@ -33,6 +37,7 @@ final class LoggerFactoryImpl implements LoggerFactory {
         providerLoggers: providerLoggers,
         filters: _filters,
         clock: _clock,
+        enricher: _enricher,
       );
     });
   }
@@ -41,7 +46,40 @@ final class LoggerFactoryImpl implements LoggerFactory {
   void addProvider(LoggerProvider provider) {
     _checkDisposed();
     _providers.add(provider);
-    // Invalidate cache — new provider needs fresh loggers.
+    _cache.clear();
+  }
+
+  @override
+  void setMinimumLevel(PurpleLogLevel level) {
+    _filters = FilterRuleSet(
+      rules: _filters.rules,
+      globalMinimum: level,
+    );
+    _cache.clear();
+  }
+
+  @override
+  void setGlobalLevel(PurpleLogLevel level) {
+    setMinimumLevel(level);
+  }
+
+  @override
+  void addFilterRule(FilterRule rule) {
+    final newRules = List<FilterRule>.from(_filters.rules)..add(rule);
+    _filters = FilterRuleSet(
+      rules: newRules,
+      globalMinimum: _filters.globalMinimum,
+    );
+    _cache.clear();
+  }
+
+  @override
+  void removeFilterRule(FilterRule rule) {
+    final newRules = _filters.rules.where((r) => r != rule).toList();
+    _filters = FilterRuleSet(
+      rules: newRules,
+      globalMinimum: _filters.globalMinimum,
+    );
     _cache.clear();
   }
 

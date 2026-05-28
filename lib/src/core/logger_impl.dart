@@ -6,24 +6,24 @@ import '../abstractions/logger_provider.dart';
 import '../abstractions/logging_scope.dart';
 import '../utils/timestamp_provider.dart';
 import 'filter_rules.dart';
+import 'logger_enricher.dart';
 
-/// Internal [Logger] that dispatches [LogEvent]s to all registered providers.
-///
-/// Each provider gets its own filtered view via [FilterRuleSet].
-/// A single [LogEvent] is allocated per [log] call and shared across providers.
 final class LoggerImpl with LoggerConvenience implements Logger {
   final List<ProviderLogger> _providerLoggers;
   final FilterRuleSet _filters;
   final TimestampProvider _clock;
+  final LoggerEnricher? _enricher;
 
   LoggerImpl({
     required String category,
     required List<ProviderLogger> providerLoggers,
     required FilterRuleSet filters,
     required TimestampProvider clock,
+    LoggerEnricher? enricher,
   })  : _providerLoggers = providerLoggers,
         _filters = filters,
         _clock = clock,
+        _enricher = enricher,
         _category = category;
 
   final String _category;
@@ -63,13 +63,18 @@ final class LoggerImpl with LoggerConvenience implements Logger {
     if (!anyEnabled) return;
 
     // Single LogEvent allocation, shared across all providers.
+    final scopeProps = Map<String, Object?>.from(LoggingScope.currentProperties);
+    if (_enricher != null) {
+      scopeProps.addAll(_enricher.properties);
+    }
+
     final event = LogEvent(
       level: level,
       category: _category,
       message: message?.toString() ?? '',
       timestamp: _clock.now(),
       properties: properties,
-      scopeProperties: LoggingScope.currentProperties,
+      scopeProperties: scopeProps,
       error: error,
       stackTrace: stackTrace,
     );

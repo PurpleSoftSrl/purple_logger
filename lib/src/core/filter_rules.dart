@@ -51,9 +51,11 @@ final class FilterRuleSet {
     PurpleLogLevel globalMinimum = PurpleLogLevel.trace,
   })  : _rules = rules != null ? List.of(rules) : [],
         _globalMinimum = globalMinimum {
-    // Sort by specificity descending (most specific first).
     _rules.sort((a, b) => b.specificity.compareTo(a.specificity));
   }
+
+  List<FilterRule> get rules => List.unmodifiable(_rules);
+  PurpleLogLevel get globalMinimum => _globalMinimum;
 
   /// Returns the effective minimum level for [providerType] and [category].
   PurpleLogLevel getEffectiveLevel(Type providerType, String category) {
