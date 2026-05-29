@@ -1,120 +1,78 @@
-/// Enterprise-grade structured logger for PurpleSoft Flutter plugins.
+/// Enterprise-grade structured logger for Dart and Flutter.
 ///
-/// Provides hierarchical, leveled logging with zero `print()` calls.
-/// Each plugin gets its own named logger. In debug builds, logs are verbose;
-/// in release builds, only warnings and errors are emitted by default.
+/// PurpleLogger provides hierarchical, leveled, structured logging with:
+/// - **Provider pipeline**: Multiple sinks (Console, Debug, Memory, Null, Custom)
+///   running simultaneously
+/// - **Structured properties**: Key-value pairs kept separate from messages
+/// - **Zone-based scopes**: Async-safe contextual properties that propagate
+///   through the entire call chain
+/// - **Filter rules**: Global + per-category + per-provider level control
+/// - **Zero-alloc guards**: `isEnabled()` exits before any object allocation
+/// - **Formatters**: Simple (human-readable) and JSON out of the box
+/// - **MemoryLogStore**: In-memory store with rich query methods for testing
+/// - **Tag-based logging**: Lightweight secondary classification
+/// - **Exception helper**: Auto-derived `errorType`/`errorMessage` properties
+/// - **HTTP interceptor**: Framework-agnostic request/response/error logging
+/// - **OpenTelemetry bridge**: Via the `purple_logger_otel` companion package
 ///
-/// Usage:
+/// ## Quick start
+///
 /// ```dart
-/// final _log = PurpleLogger('PurpleTTS');
-/// _log.info('Engine initialized');
-/// _log.warning('Voice not found, falling back');
-/// _log.error('Synthesis failed', error: e, stackTrace: st);
+/// // One-liner
+/// final log = PurpleLogger.quick();
+/// log.info('Application started');
+///
+/// // Full setup
+/// final factory = LoggingBuilder()
+///   .addConsole()
+///   .setMinimumLevel(PurpleLogLevel.info)
+///   .build();
+/// final logger = factory.createLogger('MyApp');
+/// logger.info('Order placed', properties: {'orderId': 1042});
+/// factory.dispose();
 /// ```
+///
+/// Named after Argus Panoptes — the all-seeing guardian of Greek mythology.
+/// Every event, every error, every trace — nothing escapes PurpleLogger.
 library;
 
-import 'package:logging/logging.dart';
+// ── Abstractions ────────────────────────────────────────────────────────────
+export 'src/abstractions/event_logger.dart';
+export 'src/abstractions/log_event.dart';
+export 'src/abstractions/log_formatter.dart';
+export 'src/abstractions/log_level.dart';
+export 'src/abstractions/logger.dart';
+export 'src/abstractions/logger_factory.dart';
+export 'src/abstractions/logger_provider.dart';
+export 'src/abstractions/logging_scope.dart';
 
-/// Hierarchical log level names for PurpleSoft plugins.
-///
-/// Follows the standard [Level] hierarchy from `package:logging`:
-/// - [Level.FINEST] — Verbose internal tracing (method entry/exit)
-/// - [Level.FINER]  — Detailed tracing (event dispatch)
-/// - [Level.FINE]   — General tracing (state changes)
-/// - [Level.CONFIG] — Configuration changes
-/// - [Level.INFO]   — Important operational events
-/// - [Level.WARNING] — Recoverable issues
-/// - [Level.SEVERE] — Failures requiring attention
-/// - [Level.SHOUT]  — Critical failures
+// ── Core ────────────────────────────────────────────────────────────────────
+export 'src/core/filter_rules.dart';
+export 'src/core/logging_builder.dart';
+export 'src/core/logger_enricher.dart';
+export 'src/core/env_logging_config.dart';
+export 'src/core/logger_factory_impl.dart';
+export 'src/core/logger_impl.dart';
+export 'src/core/purple_logger_quick.dart';
 
-/// Enterprise-grade logger wrapper for PurpleSoft plugins.
-///
-/// Wraps `package:logging` with:
-/// - Named loggers per plugin (hierarchical dot notation)
-/// - Structured message formatting with timestamps
-/// - Production-safe defaults (WARNING+ in release, ALL in debug)
-/// - Zero `print()` calls — all output goes through [Logger]
-class PurpleLogger {
-  static bool _initialized = false;
+// ── Providers ────────────────────────────────────────────────────────────────
+export 'src/providers/console_logger.dart';
+export 'src/providers/debug_logger.dart';
+export 'src/providers/file_logger.dart';
+export 'src/providers/memory_logger.dart';
+export 'src/providers/null_logger.dart';
 
-  /// The underlying [Logger] instance.
-  final Logger _logger;
+// ── Formatting ───────────────────────────────────────────────────────────────
+export 'src/formatting/json_formatter.dart';
+export 'src/formatting/simple_formatter.dart';
 
-  /// Creates a named logger for a PurpleSoft plugin.
-  ///
-  /// [name] should be the plugin identifier, e.g. `'PurpleTTS'` or `'PurpleSTT'`.
-  /// Loggers are hierarchical: `PurpleTTS.Engine` is a child of `PurpleTTS`.
-  PurpleLogger(String name) : _logger = Logger(name) {
-    _ensureInitialized();
-  }
+// ── Extensions ───────────────────────────────────────────────────────────────
+export 'src/extensions/logger_exception_extension.dart';
+export 'src/extensions/logger_tag_extension.dart';
+export 'src/extensions/logging_builder_extensions.dart';
 
-  /// Creates a child logger for a sub-component.
-  ///
-  /// Example: `PurpleLogger('PurpleTTS').child('Engine')`
-  /// creates logger `PurpleTTS.Engine`.
-  PurpleLogger child(String subname) => PurpleLogger('${_logger.name}.$subname');
+// ── Integrations ─────────────────────────────────────────────────────────────
+export 'src/integrations/http_log_interceptor.dart';
 
-  /// Ensures the logging system is configured exactly once.
-  static void _ensureInitialized() {
-    if (_initialized) return;
-    _initialized = true;
-
-    // In release mode, only show WARNING and above.
-    // In debug mode, show everything.
-    Logger.root.level = bool.fromEnvironment('dart.vm.product')
-        ? Level.WARNING
-        : Level.ALL;
-
-    Logger.root.onRecord.listen((record) {
-      // Structured format: [LEVEL] [TIME] LoggerName: Message
-      final level = record.level.name.padRight(7);
-      final time = record.time.toIso8601String();
-      final prefix = '[$level] [$time] ${record.loggerName}:';
-      if (record.error != null) {
-        // ignore: avoid_print — this IS the logging sink
-        print('$prefix ${record.message}\n  Error: ${record.error}');
-        if (record.stackTrace != null) {
-          // ignore: avoid_print — this IS the logging sink
-          print('  StackTrace: ${record.stackTrace}');
-        }
-      } else {
-        // ignore: avoid_print — this IS the logging sink
-        print('$prefix ${record.message}');
-      }
-    });
-  }
-
-  // ── Convenience Methods ──────────────────────────────────────────────────
-
-  /// Log at [Level.FINEST] — verbose internal tracing.
-  void finest(Object? message, [Object? error, StackTrace? stackTrace]) =>
-      _logger.finest(message, error, stackTrace);
-
-  /// Log at [Level.FINER] — detailed tracing.
-  void finer(Object? message, [Object? error, StackTrace? stackTrace]) =>
-      _logger.finer(message, error, stackTrace);
-
-  /// Log at [Level.FINE] — general tracing.
-  void fine(Object? message, [Object? error, StackTrace? stackTrace]) =>
-      _logger.fine(message, error, stackTrace);
-
-  /// Log at [Level.CONFIG] — configuration changes.
-  void config(Object? message, [Object? error, StackTrace? stackTrace]) =>
-      _logger.config(message, error, stackTrace);
-
-  /// Log at [Level.INFO] — important operational events.
-  void info(Object? message, [Object? error, StackTrace? stackTrace]) =>
-      _logger.info(message, error, stackTrace);
-
-  /// Log at [Level.WARNING] — recoverable issues.
-  void warning(Object? message, [Object? error, StackTrace? stackTrace]) =>
-      _logger.warning(message, error, stackTrace);
-
-  /// Log at [Level.SEVERE] — failures requiring attention.
-  void error(Object? message, [Object? error, StackTrace? stackTrace]) =>
-      _logger.severe(message, error, stackTrace);
-
-  /// Log at [Level.SHOUT] — critical failures.
-  void critical(Object? message, [Object? error, StackTrace? stackTrace]) =>
-      _logger.shout(message, error, stackTrace);
-}
+// ── Utilities ─────────────────────────────────────────────────────────────────
+export 'src/utils/timestamp_provider.dart';
