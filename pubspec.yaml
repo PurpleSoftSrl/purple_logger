@@ -1,6 +1,6 @@
 name: purple_logger
 description: Enterprise-grade structured logger for Dart and Flutter — provider pipeline, zone scopes, file rotation, OTel bridge.
-version: 2.1.4
+version: 2.1.5
 repository: https://github.com/purplesoftsrl/purple_logger
 homepage: https://github.com/purplesoftsrl/purple_logger
 topics: [logging, observability, opentelemetry, structured-logging]
