@@ -7,6 +7,11 @@ import 'filter_rules.dart';
 import 'logger_enricher.dart';
 import 'logger_impl.dart';
 
+/// Default implementation of [LoggerFactory] that manages providers, filters,
+/// and logger caching.
+///
+/// Loggers are cached by category and invalidated when providers, filters,
+/// or the minimum level change.
 final class LoggerFactoryImpl implements LoggerFactory {
   final List<LoggerProvider> _providers;
   FilterRuleSet _filters;
@@ -15,6 +20,7 @@ final class LoggerFactoryImpl implements LoggerFactory {
   final Map<String, Logger> _cache = {};
   bool _disposed = false;
 
+  /// Creates a [LoggerFactoryImpl].
   LoggerFactoryImpl({
     required List<LoggerProvider> providers,
     required FilterRuleSet filters,
@@ -25,6 +31,9 @@ final class LoggerFactoryImpl implements LoggerFactory {
         _clock = clock,
         _enricher = enricher;
 
+  /// Creates or returns a cached [Logger] for the given [category].
+  ///
+  /// Throws [StateError] if the factory has been [dispose]d.
   @override
   Logger createLogger(String category) {
     _checkDisposed();
@@ -42,6 +51,9 @@ final class LoggerFactoryImpl implements LoggerFactory {
     });
   }
 
+  /// Registers a new [LoggerProvider] and invalidates the logger cache.
+  ///
+  /// Newly created loggers will include the new provider.
   @override
   void addProvider(LoggerProvider provider) {
     _checkDisposed();
@@ -49,6 +61,7 @@ final class LoggerFactoryImpl implements LoggerFactory {
     _cache.clear();
   }
 
+  /// Sets the global minimum [PurpleLogLevel] and invalidates the logger cache.
   @override
   void setMinimumLevel(PurpleLogLevel level) {
     _filters = FilterRuleSet(
@@ -58,11 +71,13 @@ final class LoggerFactoryImpl implements LoggerFactory {
     _cache.clear();
   }
 
+  /// Alias for [setMinimumLevel].
   @override
   void setGlobalLevel(PurpleLogLevel level) {
     setMinimumLevel(level);
   }
 
+  /// Adds a [FilterRule] and invalidates the logger cache.
   @override
   void addFilterRule(FilterRule rule) {
     final newRules = List<FilterRule>.from(_filters.rules)..add(rule);
@@ -73,6 +88,7 @@ final class LoggerFactoryImpl implements LoggerFactory {
     _cache.clear();
   }
 
+  /// Removes a [FilterRule] and invalidates the logger cache.
   @override
   void removeFilterRule(FilterRule rule) {
     final newRules = _filters.rules.where((r) => r != rule).toList();
@@ -83,6 +99,9 @@ final class LoggerFactoryImpl implements LoggerFactory {
     _cache.clear();
   }
 
+  /// Disposes all registered providers and clears the logger cache.
+  ///
+  /// Subsequent calls to any method except [dispose] will throw [StateError].
   @override
   void dispose() {
     if (_disposed) return;

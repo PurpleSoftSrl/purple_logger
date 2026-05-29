@@ -15,6 +15,8 @@ extension LoggerTagExtension on Logger {
   static const tagKey = 'tag';
 
   /// Emits a tagged log entry at [level].
+  ///
+  /// The [tag] is stored under the reserved property key [tagKey].
   void logTagged(
     PurpleLogLevel level,
     String tag,
@@ -26,27 +28,27 @@ extension LoggerTagExtension on Logger {
     log(level, message, properties: merged);
   }
 
-  /// Tagged [PurpleLogLevel.trace].
+  /// Emits a tagged entry at [PurpleLogLevel.trace].
   void traceTagged(String tag, Object? message,
           {Map<String, Object?>? properties}) =>
       logTagged(PurpleLogLevel.trace, tag, message, properties: properties);
 
-  /// Tagged [PurpleLogLevel.debug].
+  /// Emits a tagged entry at [PurpleLogLevel.debug].
   void debugTagged(String tag, Object? message,
           {Map<String, Object?>? properties}) =>
       logTagged(PurpleLogLevel.debug, tag, message, properties: properties);
 
-  /// Tagged [PurpleLogLevel.info].
+  /// Emits a tagged entry at [PurpleLogLevel.info].
   void infoTagged(String tag, Object? message,
           {Map<String, Object?>? properties}) =>
       logTagged(PurpleLogLevel.info, tag, message, properties: properties);
 
-  /// Tagged [PurpleLogLevel.warning].
+  /// Emits a tagged entry at [PurpleLogLevel.warning].
   void warningTagged(String tag, Object? message,
           {Map<String, Object?>? properties}) =>
       logTagged(PurpleLogLevel.warning, tag, message, properties: properties);
 
-  /// Tagged [PurpleLogLevel.error].
+  /// Emits a tagged entry at [PurpleLogLevel.error] with optional [error] and [stackTrace].
   void errorTagged(
     String tag,
     Object? message, {
@@ -62,7 +64,7 @@ extension LoggerTagExtension on Logger {
         stackTrace: stackTrace,
       );
 
-  /// Tagged [PurpleLogLevel.fatal].
+  /// Emits a tagged entry at [PurpleLogLevel.fatal] with optional [error] and [stackTrace].
   void fatalTagged(
     String tag,
     Object? message, {

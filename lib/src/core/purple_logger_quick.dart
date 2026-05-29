@@ -25,9 +25,13 @@ import '../providers/console_logger.dart';
 final class PurpleLogger {
   static LoggerFactory? _quickFactory;
 
+  /// Private constructor — use static methods only.
   PurpleLogger._();
 
-  /// Returns a [Logger] with default category ('App') and level (debug+).
+  /// Returns a [Logger] with default category ('App') and level ([PurpleLogLevel.debug]).
+  ///
+  /// Creates a shared [ConsoleLoggerProvider]-backed factory on first call.
+  /// Subsequent calls reuse the existing factory.
   static Logger quick({
     String category = 'App',
     PurpleLogLevel minimumLevel = PurpleLogLevel.debug,
@@ -36,7 +40,10 @@ final class PurpleLogger {
     return _quickFactory!.createLogger(category);
   }
 
-  /// Returns a shared [LoggerFactory] with the given [minimumLevel].
+  /// Returns a shared [LoggerFactory] with [ConsoleLoggerProvider] output.
+  ///
+  /// The factory is lazily created on first call and reused thereafter.
+  /// Call [disposeQuickFactory] to release resources.
   static LoggerFactory quickFactory({
     PurpleLogLevel minimumLevel = PurpleLogLevel.debug,
   }) {

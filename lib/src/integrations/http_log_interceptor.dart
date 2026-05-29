@@ -19,12 +19,23 @@ import '../abstractions/log_level.dart';
 /// ```
 final class HttpLogInterceptor {
   final Logger _logger;
+
+  /// [PurpleLogLevel] for request logs. Defaults to [PurpleLogLevel.debug].
   final PurpleLogLevel requestLevel;
+
+  /// [PurpleLogLevel] for response logs. Defaults to [PurpleLogLevel.debug].
   final PurpleLogLevel responseLevel;
+
+  /// [PurpleLogLevel] for error logs. Defaults to [PurpleLogLevel.error].
   final PurpleLogLevel errorLevel;
+
+  /// Whether to include HTTP headers in log properties.
   final bool logHeaders;
+
+  /// Whether to include HTTP request/response body in log properties.
   final bool logBody;
 
+  /// Creates an [HttpLogInterceptor] that writes to [_logger].
   const HttpLogInterceptor(
     this._logger, {
     this.requestLevel = PurpleLogLevel.debug,

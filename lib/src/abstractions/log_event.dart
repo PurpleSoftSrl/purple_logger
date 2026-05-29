@@ -29,6 +29,10 @@ final class LogEvent {
   /// Stack trace associated with [error], if any.
   final StackTrace? stackTrace;
 
+  /// Creates a [LogEvent].
+  ///
+  /// [properties] and [scopeProperties] are frozen to unmodifiable maps.
+  /// [timestamp] should typically be [DateTime.now] in UTC.
   LogEvent({
     required this.level,
     required this.category,
@@ -42,6 +46,9 @@ final class LogEvent {
         scopeProperties = _freeze(scopeProperties);
 
   /// Returns a copy with optional field overrides.
+  ///
+  /// Omitted fields retain their current value. [properties] and
+  /// [scopeProperties] are re-frozen as unmodifiable maps.
   LogEvent copyWith({
     PurpleLogLevel? level,
     String? category,
@@ -64,6 +71,7 @@ final class LogEvent {
         stackTrace: stackTrace ?? this.stackTrace,
       );
 
+  /// Value equality based on all fields except [stackTrace].
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -76,6 +84,7 @@ final class LogEvent {
           _mapEq(scopeProperties, other.scopeProperties) &&
           error == other.error;
 
+  /// Hash based on all fields except [stackTrace].
   @override
   int get hashCode {
     try {
@@ -93,6 +102,7 @@ final class LogEvent {
     }
   }
 
+  /// Human-readable summary including level, category, message, and error if present.
   @override
   String toString() =>
       'LogEvent($level, $category, $message${error != null ? ', error: $error' : ''})';

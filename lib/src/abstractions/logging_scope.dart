@@ -20,9 +20,10 @@ final class LoggingScope {
   /// Properties attached to this scope.
   final Map<String, Object?> properties;
 
-  /// Parent scope, if any.
+  /// Parent scope in the chain, if any.
   final LoggingScope? _parent;
 
+  /// Creates a scope with the given [properties] and optional [_parent].
   LoggingScope(this.properties, [this._parent]);
 
   /// The effective properties merged from the entire scope chain.

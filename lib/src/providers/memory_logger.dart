@@ -36,8 +36,11 @@ final class MemoryLoggerProvider extends LoggerProvider {
 
 /// [EventLogger] that appends events to a [MemoryLogStore].
 final class MemoryLogger with LoggerConvenience implements EventLogger {
+  /// Logger category name.
   @override
   final String category;
+
+  /// The [MemoryLogStore] that receives log events.
   final MemoryLogStore store;
 
   MemoryLogger({required this.category, required this.store});
@@ -65,10 +68,19 @@ final class MemoryLogger with LoggerConvenience implements EventLogger {
 /// In-memory store for log events with rich query capabilities.
 ///
 /// Supports optional bounded capacity with FIFO eviction.
+///
+/// ```dart
+/// final store = MemoryLogStore(maxCapacity: 1000);
+/// // ... logging activity ...
+/// final errors = store.eventsAtOrAbove(PurpleLogLevel.error);
+/// print(store.exportAsJson());
+/// ```
 final class MemoryLogStore {
+  /// Maximum number of events to retain; `null` for unbounded.
   final int? maxCapacity;
   final ListQueue<LogEvent> _events = ListQueue<LogEvent>();
 
+  /// Creates a [MemoryLogStore] with an optional [maxCapacity].
   MemoryLogStore({this.maxCapacity});
 
   /// Appends [event] to the store, evicting the oldest if at capacity.

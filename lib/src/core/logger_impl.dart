@@ -8,12 +8,18 @@ import '../utils/timestamp_provider.dart';
 import 'filter_rules.dart';
 import 'logger_enricher.dart';
 
+/// Default [Logger] implementation that routes events through provider loggers
+/// with filter, scope, and enrichment support.
+///
+/// A single [LogEvent] is allocated per [log] call and shared across all
+/// enabled providers — zero redundant allocations.
 final class LoggerImpl with LoggerConvenience implements Logger {
   final List<ProviderLogger> _providerLoggers;
   final FilterRuleSet _filters;
   final TimestampProvider _clock;
   final LoggerEnricher? _enricher;
 
+  /// Creates a [LoggerImpl].
   LoggerImpl({
     required String category,
     required List<ProviderLogger> providerLoggers,
@@ -28,9 +34,11 @@ final class LoggerImpl with LoggerConvenience implements Logger {
 
   final String _category;
 
+  /// The logger category name.
   @override
   String get category => _category;
 
+  /// Returns `true` if at least one provider would emit [level].
   @override
   bool isEnabled(PurpleLogLevel level) {
     if (level.isNone) return false;
@@ -42,6 +50,10 @@ final class LoggerImpl with LoggerConvenience implements Logger {
     return false;
   }
 
+  /// Assembles a [LogEvent] and dispatches it to all enabled providers.
+  ///
+  /// Scope properties and enricher properties are merged into the event
+  /// automatically. [PurpleLogLevel.none] is silently discarded.
   @override
   void log(
     PurpleLogLevel level,
@@ -87,6 +99,7 @@ final class LoggerImpl with LoggerConvenience implements Logger {
     }
   }
 
+  /// Creates a new [LoggingScope] with the given [properties].
   @override
   LoggingScope beginScope(Map<String, Object?> properties) =>
       LoggingScope(properties);
@@ -99,11 +112,17 @@ final class LoggerImpl with LoggerConvenience implements Logger {
 /// via [EventLogger.write]; otherwise the event is silently consumed.
 final class ProviderLogger {
   final Logger _logger;
+
+  /// The runtime type of the [LoggerProvider] that created [_logger].
   final Type providerType;
 
+  /// Creates a [ProviderLogger] wrapping [_logger] with [providerType].
   ProviderLogger(this._logger, this.providerType);
 
   /// Dispatches [event] to the underlying logger.
+  ///
+  /// If [_logger] implements [EventLogger], calls [EventLogger.write].
+  /// Otherwise the event is silently consumed.
   void write(LogEvent event) {
     final el = _logger;
     if (el is EventLogger) {

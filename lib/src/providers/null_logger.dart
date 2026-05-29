@@ -13,9 +13,11 @@ import '../abstractions/logging_scope.dart';
 /// LoggingBuilder().addProvider(NullLoggerProvider()).build();
 /// ```
 final class NullLoggerProvider extends LoggerProvider {
+  /// Creates a [NullLogger] that discards all events.
   @override
   Logger createLogger(String category) => NullLogger();
 
+  /// No external resources to release.
   @override
   void dispose() {}
 }
@@ -30,17 +32,21 @@ final class NullLoggerProvider extends LoggerProvider {
 /// }
 /// ```
 final class NullLogger with LoggerConvenience implements EventLogger {
+  /// Empty category string.
   @override
   String get category => '';
 
+  /// Always returns `false` — no log level is ever emitted.
   @override
   bool isEnabled(PurpleLogLevel level) => false;
 
+  /// Discards the event.
   @override
   void write(LogEvent event) {
     // Discard.
   }
 
+  /// No-op implementation that discards all arguments.
   @override
   void log(
     PurpleLogLevel level,
@@ -52,6 +58,7 @@ final class NullLogger with LoggerConvenience implements EventLogger {
     // Discard.
   }
 
+  /// Creates a new [LoggingScope] with the given [properties].
   @override
   LoggingScope beginScope(Map<String, Object?> properties) =>
       LoggingScope(properties);

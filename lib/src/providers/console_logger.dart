@@ -18,15 +18,21 @@ import '../formatting/simple_formatter.dart';
 /// LoggingBuilder().addConsole(formatter: const JsonFormatter());
 /// ```
 final class ConsoleLoggerProvider extends LoggerProvider {
+  /// The [LogFormatter] used to render each event.
   final LogFormatter formatter;
 
+  /// Creates a [ConsoleLoggerProvider] with an optional [formatter].
+  ///
+  /// Defaults to [SimpleFormatter] when not specified.
   ConsoleLoggerProvider({LogFormatter? formatter})
       : formatter = formatter ?? const SimpleFormatter();
 
+  /// Creates a new [ConsoleLogger] for the given [category].
   @override
   Logger createLogger(String category) =>
       ConsoleLogger(category: category, formatter: formatter);
 
+  /// No external resources to release.
   @override
   void dispose() {
     // No resources to release.
@@ -34,22 +40,31 @@ final class ConsoleLoggerProvider extends LoggerProvider {
 }
 
 /// [EventLogger] that writes formatted log events to [stdout] with ANSI colors.
+///
+/// Each event is formatted by a [LogFormatter] and colorized by severity.
 final class ConsoleLogger with LoggerConvenience implements EventLogger {
+  /// Logger category name.
   @override
   final String category;
+
+  /// The [LogFormatter] used to render each event.
   final LogFormatter formatter;
 
+  /// Creates a [ConsoleLogger] with the given [category] and [formatter].
   ConsoleLogger({required this.category, required this.formatter});
 
+  /// Always enabled unless [PurpleLogLevel.none].
   @override
   bool isEnabled(PurpleLogLevel level) => !level.isNone;
 
+  /// Formats and writes [event] to [stdout] with ANSI color.
   @override
   void write(LogEvent event) {
     final line = formatter.format(event);
     stdout.writeln(_colorize(event.level, line));
   }
 
+  /// No-op — dispatching is handled by [LoggerImpl].
   @override
   void log(
     PurpleLogLevel level,
@@ -61,11 +76,12 @@ final class ConsoleLogger with LoggerConvenience implements EventLogger {
     // Dispatched by LoggerImpl — not called directly.
   }
 
+  /// Creates a new [LoggingScope] with the given [properties].
   @override
   LoggingScope beginScope(Map<String, Object?> properties) =>
       LoggingScope(properties);
 
-  /// ANSI color codes per severity level.
+  /// Applies ANSI color codes based on [level] severity.
   static String _colorize(PurpleLogLevel level, String text) {
     // Only colorize if stdout supports ANSI (most terminals do).
     final code = switch (level) {

@@ -12,10 +12,15 @@ import '../abstractions/log_formatter.dart';
 /// {"timestamp":"2026-05-28T14:23:01.123456Z","level":"info","category":"OrderService","message":"Order placed","properties":{"orderId":1042}}
 /// ```
 final class JsonFormatter implements LogFormatter {
+  /// Whether to pretty-print the JSON output with indentation.
   final bool prettyPrint;
 
+  /// Creates a [JsonFormatter].
+  ///
+  /// [prettyPrint] defaults to `false` (compact, single-line output).
   const JsonFormatter({this.prettyPrint = false});
 
+  /// Formats [event] as a single-line JSON object.
   @override
   String format(LogEvent event) {
     final buf = StringBuffer('{');

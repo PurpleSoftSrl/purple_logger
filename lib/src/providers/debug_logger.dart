@@ -16,23 +16,32 @@ import '../abstractions/logging_scope.dart';
 /// LoggingBuilder().addDebug();
 /// ```
 final class DebugLoggerProvider extends LoggerProvider {
+  /// Creates a new [DebugLogger] for the given [category].
   @override
   Logger createLogger(String category) => DebugLogger(category: category);
 
+  /// No external resources to release.
   @override
   void dispose() {}
 }
 
 /// [EventLogger] that writes to `dart:developer.log()`.
+///
+/// Each event is forwarded to [developer.log] with the category as the log
+/// name, enabling filtering in Flutter/Dart DevTools.
 final class DebugLogger with LoggerConvenience implements EventLogger {
+  /// Logger category name.
   @override
   final String category;
 
+  /// Creates a [DebugLogger] with the given [category].
   DebugLogger({required this.category});
 
+  /// Always enabled unless [PurpleLogLevel.none].
   @override
   bool isEnabled(PurpleLogLevel level) => !level.isNone;
 
+  /// Forwards [event] to `dart:developer.log()`.
   @override
   void write(LogEvent event) {
     developer.log(
@@ -45,6 +54,7 @@ final class DebugLogger with LoggerConvenience implements EventLogger {
     );
   }
 
+  /// No-op — dispatching is handled by [LoggerImpl].
   @override
   void log(
     PurpleLogLevel level,
@@ -54,6 +64,7 @@ final class DebugLogger with LoggerConvenience implements EventLogger {
     StackTrace? stackTrace,
   }) {}
 
+  /// Creates a new [LoggingScope] with the given [properties].
   @override
   LoggingScope beginScope(Map<String, Object?> properties) =>
       LoggingScope(properties);

@@ -10,9 +10,19 @@ import '../abstractions/logger_provider.dart';
 import '../abstractions/logging_scope.dart';
 import '../formatting/simple_formatter.dart';
 
+/// Configuration for automatic log file rotation.
+///
+/// When the log file exceeds [maxFileSizeBytes], it is rotated:
+/// `app.log` → `app.log.1` → `app.log.2` … up to [maxFiles].
+/// Optionally compresses rotated files with GZip when [compressRotated] is `true`.
 final class RotatingFileConfig {
+  /// Maximum file size in bytes before rotation. Defaults to 10 MiB.
   final int maxFileSizeBytes;
+
+  /// Maximum number of rotated files to retain. Defaults to 5.
   final int maxFiles;
+
+  /// If `true`, rotated files are GZip-compressed. Defaults to `false`.
   final bool compressRotated;
 
   const RotatingFileConfig({
@@ -22,6 +32,19 @@ final class RotatingFileConfig {
   });
 }
 
+/// [LoggerProvider] that writes formatted log events to a file on disk.
+///
+/// Supports periodic flushing, automatic rotation via [RotatingFileConfig],
+/// and any [LogFormatter]. Default formatter is [SimpleFormatter] with
+/// timestamps.
+///
+/// ```dart
+/// LoggingBuilder().addFile(filePath: 'logs/app.log');
+/// LoggingBuilder().addFile(
+///   filePath: 'logs/app.log',
+///   rotation: const RotatingFileConfig(maxFileSizeBytes: 5 * 1024 * 1024),
+/// );
+/// ```
 final class FileLoggerProvider extends LoggerProvider {
   final String _filePath;
   final LogFormatter _formatter;
@@ -33,6 +56,11 @@ final class FileLoggerProvider extends LoggerProvider {
   int _currentFileSize = 0;
   bool _disposed = false;
 
+  /// Creates a [FileLoggerProvider].
+  ///
+  /// [filePath] is the path to the log file. Parent directories are created
+  /// automatically. [flushIntervalMs] controls how often the buffer is
+  /// flushed to disk (0 disables periodic flushing).
   FileLoggerProvider({
     required String filePath,
     LogFormatter? formatter,
@@ -51,6 +79,7 @@ final class FileLoggerProvider extends LoggerProvider {
     }
   }
 
+  /// Creates the parent directory if it doesn't exist.
   void _ensureDirectoryExists() {
     final dir = Directory(File(_filePath).parent.path);
     if (!dir.existsSync()) {
@@ -66,6 +95,7 @@ final class FileLoggerProvider extends LoggerProvider {
     _file = f.openSync(mode: FileMode.append);
   }
 
+  /// Creates a new [FileLogger] for the given [category].
   @override
   Logger createLogger(String category) {
     final logger = FileLogger(
@@ -123,6 +153,8 @@ final class FileLoggerProvider extends LoggerProvider {
     file.deleteSync();
   }
 
+  /// Flushes any pending writes, cancels the flush timer, closes the file,
+  /// and clears registered loggers.
   @override
   void dispose() {
     _disposed = true;
@@ -133,20 +165,28 @@ final class FileLoggerProvider extends LoggerProvider {
   }
 }
 
+/// [EventLogger] that buffers formatted lines and writes them to the
+/// owning [FileLoggerProvider]'s file output.
 final class FileLogger with LoggerConvenience implements EventLogger {
+  /// Logger category name.
   @override
   final String category;
+
+  /// Back-reference to the owning provider.
   final FileLoggerProvider _provider;
 
   FileLogger({required this.category, required FileLoggerProvider provider})
       : _provider = provider;
 
+  /// Always enabled unless [PurpleLogLevel.none].
   @override
   bool isEnabled(PurpleLogLevel level) => !level.isNone;
 
+  /// Buffers [event] for batch writing by the owning [FileLoggerProvider].
   @override
   void write(LogEvent event) => _provider._write(event);
 
+  /// No-op — dispatching is handled by [LoggerImpl].
   @override
   void log(
     PurpleLogLevel level,
@@ -156,6 +196,7 @@ final class FileLogger with LoggerConvenience implements EventLogger {
     StackTrace? stackTrace,
   }) {}
 
+  /// Creates a new [LoggingScope] with the given [properties].
   @override
   LoggingScope beginScope(Map<String, Object?> properties) =>
       LoggingScope(properties);

@@ -42,19 +42,19 @@ abstract interface class Logger {
   /// within [LoggingScope.run] / [LoggingScope.runAsync].
   LoggingScope beginScope(Map<String, Object?> properties);
 
-  /// Log at [PurpleLogLevel.trace].
+  /// Log at [PurpleLogLevel.trace] with optional structured [properties].
   void trace(Object? message, {Map<String, Object?>? properties});
 
-  /// Log at [PurpleLogLevel.debug].
+  /// Log at [PurpleLogLevel.debug] with optional structured [properties].
   void debug(Object? message, {Map<String, Object?>? properties});
 
-  /// Log at [PurpleLogLevel.info].
+  /// Log at [PurpleLogLevel.info] with optional structured [properties].
   void info(Object? message, {Map<String, Object?>? properties});
 
-  /// Log at [PurpleLogLevel.warning].
+  /// Log at [PurpleLogLevel.warning] with optional structured [properties].
   void warning(Object? message, {Map<String, Object?>? properties});
 
-  /// Log at [PurpleLogLevel.error].
+  /// Log at [PurpleLogLevel.error] with optional [error], [stackTrace], and [properties].
   void error(
     Object? message, {
     Object? error,
@@ -62,7 +62,7 @@ abstract interface class Logger {
     Map<String, Object?>? properties,
   });
 
-  /// Log at [PurpleLogLevel.fatal].
+  /// Log at [PurpleLogLevel.fatal] with optional [error], [stackTrace], and [properties].
   void fatal(
     Object? message, {
     Object? error,

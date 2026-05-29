@@ -10,10 +10,15 @@ import '../abstractions/log_formatter.dart';
 /// LoggingBuilder().addConsole(formatter: const SimpleFormatter(includeTimestamp: false));
 /// ```
 final class SimpleFormatter implements LogFormatter {
+  /// Whether to prepend an ISO 8601 timestamp to each log line.
   final bool includeTimestamp;
 
+  /// Creates a [SimpleFormatter].
+  ///
+  /// [includeTimestamp] defaults to `true`.
   const SimpleFormatter({this.includeTimestamp = true});
 
+  /// Formats [event] as a human-readable single line.
   @override
   String format(LogEvent event) {
     final buf = StringBuffer();

@@ -3,6 +3,7 @@
 /// Production code uses [TimestampProvider.utc] (real wall-clock).
 /// Tests can inject [TimestampProvider.fake] for reproducible timestamps.
 abstract class TimestampProvider {
+  /// Private constructor to prevent external subclassing.
   TimestampProvider._();
 
   /// Returns the current UTC time.

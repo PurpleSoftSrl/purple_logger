@@ -40,12 +40,19 @@ final class FilterRule {
   }
 }
 
-/// Ordered set of filter rules that determines the effective minimum level
-/// for each provider/category combination.
+/// Ordered set of [FilterRule]s that determines the effective minimum
+/// [PurpleLogLevel] for each provider/category combination.
+///
+/// Rules are sorted by specificity (most specific first). When multiple
+/// rules match, the first (most specific) wins. If no rule matches, the
+/// [globalMinimum] applies.
 final class FilterRuleSet {
   final List<FilterRule> _rules;
   final PurpleLogLevel _globalMinimum;
 
+  /// Creates a [FilterRuleSet] with optional [rules] and a [globalMinimum].
+  ///
+  /// Rules are automatically sorted by descending specificity.
   FilterRuleSet({
     List<FilterRule>? rules,
     PurpleLogLevel globalMinimum = PurpleLogLevel.trace,
@@ -54,10 +61,15 @@ final class FilterRuleSet {
     _rules.sort((a, b) => b.specificity.compareTo(a.specificity));
   }
 
+  /// All rules in this set (unmodifiable).
   List<FilterRule> get rules => List.unmodifiable(_rules);
+
+  /// The fallback level when no rule matches.
   PurpleLogLevel get globalMinimum => _globalMinimum;
 
   /// Returns the effective minimum level for [providerType] and [category].
+  ///
+  /// Walks rules in specificity order; the first match wins.
   PurpleLogLevel getEffectiveLevel(Type providerType, String category) {
     for (final rule in _rules) {
       if (rule.matches(providerType, category)) {
@@ -68,6 +80,8 @@ final class FilterRuleSet {
   }
 
   /// Returns `true` if [level] passes the filter for [providerType]/[category].
+  ///
+  /// [PurpleLogLevel.none] always returns `false`.
   bool isEnabled(Type providerType, String category, PurpleLogLevel level) {
     if (level.isNone) return false;
     final minimum = getEffectiveLevel(providerType, category);
