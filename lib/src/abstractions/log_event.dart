@@ -77,7 +77,9 @@ final class LogEvent {
           error == other.error;
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode {
+    try {
+      return Object.hash(
         level,
         category,
         message,
@@ -86,6 +88,10 @@ final class LogEvent {
         Object.hashAllUnordered(scopeProperties.entries),
         error,
       );
+    } catch (_) {
+      return Object.hash(level, category, message, timestamp, error);
+    }
+  }
 
   @override
   String toString() =>
